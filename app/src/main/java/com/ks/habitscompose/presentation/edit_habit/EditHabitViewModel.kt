@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.compose.rememberNavController
 import com.ks.habitscompose.domain.model.Habit
 import com.ks.habitscompose.domain.model.InvalidHabitException
 import com.ks.habitscompose.domain.use_case.HabitsUseCases
@@ -21,6 +22,7 @@ class EditHabitViewModel @Inject constructor(
 ) : ViewModel() {
 
     private var habitId: Int? = null
+    var isNewHabit = true
 
     private val _name = mutableStateOf(TextFieldState(hint = "Habit name"))
     val name: State<TextFieldState> = _name
@@ -36,6 +38,7 @@ class EditHabitViewModel @Inject constructor(
             if(id != -1) {
                 viewModelScope.launch {
                     habitsUseCases.getHabitUseCase(id)?.also {
+                        isNewHabit = false
                         habitId = it.id
                         _name.value = name.value.copy(
                             text = it.name,
@@ -85,6 +88,11 @@ class EditHabitViewModel @Inject constructor(
                     } catch(exception: InvalidHabitException) {
                         _eventFlow.emit(UiEvent.ShowSnackbar(exception.message ?: "An error occured..."))
                     }
+                }
+            }
+            is EditHabitEvent.DeleteHabit -> {
+                viewModelScope.launch {
+                    habitsUseCases.deleteHabitUseCase(Habit(habitId, name.value.text, description.value.text))
                 }
             }
         }

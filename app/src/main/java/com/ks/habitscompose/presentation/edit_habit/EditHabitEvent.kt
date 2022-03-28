@@ -8,4 +8,5 @@ sealed class EditHabitEvent {
     data class ChangeNameFocus(val focusState: FocusState): EditHabitEvent()
     data class ChangeDescriptionFocus(val focusState: FocusState): EditHabitEvent()
     object SaveHabit: EditHabitEvent()
+    object DeleteHabit: EditHabitEvent()
 }

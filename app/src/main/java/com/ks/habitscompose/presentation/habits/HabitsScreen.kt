@@ -1,33 +1,42 @@
 package com.ks.habitscompose.presentation.habits
 
+import android.annotation.SuppressLint
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.rememberCompositionContext
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.modifier.modifierLocalConsumer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.ks.habitscompose.presentation.edit_habit.EditHabitEvent
+import com.ks.habitscompose.presentation.edit_habit.EditHabitViewModel
 import com.ks.habitscompose.presentation.habits.components.HabitItem
 import com.ks.habitscompose.presentation.habits.components.OrderSection
 import com.ks.habitscompose.presentation.utils.Screen
 import com.ks.habitscompose.ui.theme.VeryLightGray
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
+private const val TAG = "HabitsScreen"
+
+@SuppressLint("CoroutineCreationDuringComposition")
 @Composable
 fun HabitsScreen(
     navController: NavController,
@@ -37,6 +46,21 @@ fun HabitsScreen(
     val state = viewModel.state.value
     val scaffoldState = rememberScaffoldState()
     val scope = rememberCoroutineScope()
+    
+    LaunchedEffect(key1 = true) {
+        viewModel.eventFlow.collectLatest { event ->
+            if(event) {
+                val result = scaffoldState.snackbarHostState.showSnackbar(
+                    message = "Habit deleted",
+                    actionLabel = "Undo"
+                )
+
+                if (result == SnackbarResult.ActionPerformed) {
+                    viewModel.onEvent(HabitsEvent.RestoreHabit)
+                }
+            }
+        }
+    }
 
     Scaffold(
         floatingActionButton = {
@@ -97,22 +121,10 @@ fun HabitsScreen(
                         habit = habit,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(VeryLightGray)
-                            .clickable {
-                                navController.navigate(Screen.EditHabitScreen.route + "?habitId=${habit.id}")
-                            },
-                        onDeleteClick = {
-                            viewModel.onEvent(HabitsEvent.DeleteHabit(habit))
-                            scope.launch {
-                                val result = scaffoldState.snackbarHostState.showSnackbar(
-                                    message = "Habit deleted",
-                                    actionLabel = "Undo"
-                                )
-
-                                if (result == SnackbarResult.ActionPerformed) {
-                                    viewModel.onEvent(HabitsEvent.RestoreHabit)
-                                }
-                            }
+                            .background(VeryLightGray),
+                        onEditClick = {
+                            viewModel.editedHabit = habit
+                            navController.navigate(Screen.EditHabitScreen.route + "?habitId=${habit.id}")
                         }
                     )
 
@@ -123,6 +135,4 @@ fun HabitsScreen(
         }
 
     }
-
-
 }
