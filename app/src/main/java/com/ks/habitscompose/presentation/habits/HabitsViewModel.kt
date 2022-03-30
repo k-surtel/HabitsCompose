@@ -1,22 +1,22 @@
 package com.ks.habitscompose.presentation.habits
 
 import android.util.Log
-import androidx.compose.material.SnackbarResult
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ks.habitscompose.domain.model.Habit
 import com.ks.habitscompose.domain.use_case.HabitsUseCases
 import com.ks.habitscompose.domain.utils.HabitsOrder
 import com.ks.habitscompose.domain.utils.OrderType
-import com.ks.habitscompose.presentation.edit_habit.EditHabitEvent
-import com.ks.habitscompose.presentation.edit_habit.EditHabitViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.util.*
 import javax.inject.Inject
 
 private const val TAG = "HabitsViewModel"
@@ -26,7 +26,10 @@ class HabitsViewModel @Inject constructor(
     private val habitsUseCases: HabitsUseCases
 ) : ViewModel() {
 
-    private val _state = mutableStateOf(HabitsState())
+    private val _state = mutableStateOf(HabitsState(
+        weekDays = getDates(),
+        today = getToday()
+    ))
     val state: State<HabitsState> = _state
 
     private var getHabitsJob: Job? = null
@@ -35,11 +38,7 @@ class HabitsViewModel @Inject constructor(
     private val _eventFlow = MutableSharedFlow<Boolean>()
     val eventFlow = _eventFlow.asSharedFlow()
 
-    init {
-        getHabits(HabitsOrder.Name(OrderType.Ascending))
-
-
-    }
+    init { getHabits(HabitsOrder.Name(OrderType.Ascending)) }
 
     fun onEvent(event: HabitsEvent) {
         when (event) {
@@ -80,4 +79,40 @@ class HabitsViewModel @Inject constructor(
 
         }.launchIn(viewModelScope)
     }
+
+    private fun getToday(): Int {
+        return Calendar.getInstance().get(Calendar.DAY_OF_MONTH)
+    }
+
+    fun getDates(): List<Int> {
+        val calendar = Calendar.getInstance()
+
+        /**
+         *  1 - SUNDAY
+         *  2 - MONDAY
+         *  3 - TUESDAY
+         *  4 - WEDNESDAY
+         *  5 - THURSDAY
+         *  6 - FRIDAY
+         *  7- SATURDAY
+         */
+
+        var dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
+
+        val weekDays = mutableListOf<Int>()
+
+        val mondayFirstDay = true
+        if(mondayFirstDay) dayOfWeek -= 1
+
+        calendar.add(Calendar.DATE, -dayOfWeek+1)
+
+
+        for(i in 0..6) {
+            weekDays.add(calendar.get(Calendar.DAY_OF_MONTH))
+            calendar.add(Calendar.DATE, 1)
+        }
+
+        return weekDays
+    }
+
 }

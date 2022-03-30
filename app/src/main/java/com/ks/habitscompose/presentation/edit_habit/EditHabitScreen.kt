@@ -3,9 +3,7 @@ package com.ks.habitscompose.presentation.edit_habit
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
@@ -69,14 +67,16 @@ fun EditHabitScreen(
                 Text(text = "Habits Compose", style = MaterialTheme.typography.h4)
 
                 if(!viewModel.isNewHabit) {
-                    Button(
+                    IconButton(
                         onClick = {
                             viewModel.onEvent(EditHabitEvent.DeleteHabit)
                             navController.navigateUp()
-                        },
-                        modifier = Modifier.size(30.dp)
+                        }
                     ) {
-                        Text(text = "Delete habit")
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete habit"
+                        )
                     }
                 }
             }
